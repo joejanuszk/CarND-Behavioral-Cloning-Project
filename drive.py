@@ -15,6 +15,8 @@ from io import BytesIO
 from keras.models import model_from_json
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array
 
+from model import process_image
+
 # Fix error with Keras and TensorFlow
 import tensorflow as tf
 tf.python.control_flow_ops = tf
@@ -37,13 +39,18 @@ def telemetry(sid, data):
     imgString = data["image"]
     image = Image.open(BytesIO(base64.b64decode(imgString)))
     image_array = np.asarray(image)
-    transformed_image_array = image_array[None, :, :, :]
-    # This model currently assumes that the features of the model are just the images. Feel free to change this.
+    #processed_image_array = np.reshape(process_image(image_array), (100, 320, 1))
+    processed_image_array = process_image(image_array)
+    transformed_image_array = processed_image_array[None, :, :, :]
     steering_angle = float(model.predict(transformed_image_array, batch_size=1))
     # The driving model currently just outputs a constant throttle. Feel free to edit this.
-    throttle = 0.2
+    #throttle = 0.2
+    throttle = control_speed(steering_angle)
     print(steering_angle, throttle)
     send_control(steering_angle, throttle)
+
+def control_speed(steering_angle):
+    return 0.2 + (0.05 - 0.2) * steering_angle
 
 
 @sio.on('connect')
