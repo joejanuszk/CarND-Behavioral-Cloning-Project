@@ -9,6 +9,9 @@ from bc_utils import *
 
 PATH_TO_CSV = '../data/driving_log.csv'
 IMG_BASE = '../data/'
+LEFT_WALL_CSV = '../data/left_wall_data/driving_log.csv'
+RIGHT_WALL_CSV = '../data/right_wall_data/driving_log.csv'
+DIRT_ROAD_CSV = '../data/dirt_road_data/driving_log.csv'
 INPUT_LAYER = 'convolution2d_input_1'
 OUTPUT_LAYER = 'dense_4'
 
@@ -16,6 +19,8 @@ FLIP_ABOUT_Y_AXIS = 1
 
 ZERO_IMAGES_RATIO = 0.05
 ANGLE_ADJUST = 0.28
+WALL_ADJUST = 0.1
+DIRT_ADJUST = 0.25
 ZERO_DELTA = 0.1
 NOISE_STDDEV = 0.04
 
@@ -70,11 +75,61 @@ def get_better_training_data(lines):
     np.random.shuffle(all_data)
     return all_data
 
+def get_left_wall_data():
+    with open(LEFT_WALL_CSV, 'r') as f:
+        lines = list(map(lambda l: l, f))
+    data = []
+    for line in lines:
+        parts = line.split(', ')
+        center_img_path = parts[0]
+        left_img_path = parts[1]
+        data.append({'path': center_img_path, 'angle': WALL_ADJUST, 'reverse': False})
+        data.append({'path': center_img_path, 'angle': -WALL_ADJUST, 'reverse': True})
+        data.append({'path': left_img_path, 'angle': WALL_ADJUST + ANGLE_ADJUST, 'reverse': False})
+        data.append({'path': left_img_path, 'angle': WALL_ADJUST - ANGLE_ADJUST, 'reverse': True})
+    np.random.shuffle(data)
+    return data
+
+def get_right_wall_data():
+    with open(RIGHT_WALL_CSV, 'r') as f:
+        lines = list(map(lambda l: l, f))
+    data = []
+    for line in lines:
+        parts = line.split(', ')
+        center_img_path = parts[0]
+        right_img_path = parts[2]
+        data.append({'path': center_img_path, 'angle': -WALL_ADJUST, 'reverse': False})
+        data.append({'path': center_img_path, 'angle': WALL_ADJUST, 'reverse': True})
+        data.append({'path': right_img_path, 'angle': -WALL_ADJUST - ANGLE_ADJUST, 'reverse': False})
+        data.append({'path': right_img_path, 'angle': WALL_ADJUST + ANGLE_ADJUST, 'reverse': True})
+    np.random.shuffle(data)
+    return data
+
+def get_dirt_road_data():
+    with open(DIRT_ROAD_CSV, 'r') as f:
+        lines = list(map(lambda l: l, f))
+    data = []
+    for line in lines:
+        parts = line.split(', ')
+        center_img_path = parts[0]
+        right_img_path = parts[2]
+        data.append({'path': center_img_path, 'angle': -DIRT_ADJUST, 'reverse': False})
+        data.append({'path': center_img_path, 'angle': DIRT_ADJUST, 'reverse': True})
+        data.append({'path': right_img_path, 'angle': -DIRT_ADJUST - ANGLE_ADJUST, 'reverse': False})
+        data.append({'path': right_img_path, 'angle': DIRT_ADJUST + ANGLE_ADJUST, 'reverse': True})
+    np.random.shuffle(data)
+    return data
+
 def generate_arrays_from_file(path):
     while True:
         with open(PATH_TO_CSV, 'r') as f:
             lines = list(map(lambda l: l, f))
-        data = get_better_training_data(lines)
+        udacity_data = get_better_training_data(lines)
+        left_wall_data = get_left_wall_data()
+        right_wall_data = get_right_wall_data()
+        dirt_road_data = get_dirt_road_data()
+        data = udacity_data + left_wall_data + right_wall_data + dirt_road_data + dirt_road_data
+        np.random.shuffle(data)
         np.random.shuffle(data)
         for entry in data:
             processed_img = load_and_process_image(entry['path'],

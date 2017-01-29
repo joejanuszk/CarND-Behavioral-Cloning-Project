@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Convolution2D, Flatten, Dense, Dropout
+from keras.layers import Convolution2D, Flatten, Dense, Dropout, MaxPooling2D
 from keras.regularizers import l2
 from keras.constraints import maxnorm
 from bc_utils import *
@@ -8,8 +8,10 @@ def generate_model():
     model = Sequential()
     model.add(Convolution2D(24, 5, 5, subsample=(2, 2), input_shape=IMG_SHAPE))
     model.add(Convolution2D(36, 5, 5, subsample=(2, 2)))
-    model.add(Convolution2D(48, 5, 5, subsample=(2, 2)))
-    model.add(Convolution2D(64, 3, 3))
+    model.add(MaxPooling2D())
+    model.add(Dropout(0.5))
+    #model.add(Convolution2D(48, 5, 5, subsample=(2, 2)))
+    #model.add(Convolution2D(64, 3, 3))
     model.add(Convolution2D(64, 3, 3))
     model.add(Flatten())
     model.add(Dense(100, W_regularizer=l2(0.01), W_constraint=maxnorm(4), activation='relu'))
