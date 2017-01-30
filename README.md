@@ -18,6 +18,21 @@ My model is heavily based off of Nvidia's [End to End Learning for Self-Driving 
 
 I used an adam optimizer during training with the goal of minimizing mean squared error between predicted and correct steering angles.
 
+### Full Model Description
+
+* Convolutional layer - 5x5 kernel with 24 depth, and a stride of 2.
+* Convolutional layer - 5x5 kernel with 36 depth, and a stride of 2.
+* Max pooling layer - 2x2 kernel and a stride of 2 (Keras defaults).
+* Dropout layer - 0.5 probability
+* Convolutional layer - 3x3 kernel with 64 depth.
+* Flatten layer
+* Fully connected layer - size 100, relu activation.
+* Fully connected layer - size 50, relu activation.
+* Fully connected layer - size 10
+* Fully connected layer - output layer, with only 1 entry.
+
+All fully connected layers use l2 regularization with a 0.01 weight penalty and 4 maxnorm constraint.
+
 ## Training Data
 
 I used Udacity's own driving data set for the bulk of training since I got poor results using my own data via keyboard steering.
@@ -53,6 +68,8 @@ My image processing pipeline consists of:
 I trained my model over 5 epochs with 3000 samples per epoch. 5 epochs was chosen because model accuracy did not improve significantly after that. 3000 samples was chosen based on the amount of training data available and for allowing me to train the model in a reasonable time (about 3 minutes). I training my model on a GPU-enabled AWS EC2 instance.
 
 500 samples were used for each validation cycle and for testing. Given the number of samples available, the use of augmented data, and the use of a generator that loops through all samples, there was enough data to ensure there wasn't overlap between the training, validation, and testing samples fed to the model.
+
+A generator was used to load image data. Additionally, the data were shuffled before being fed to the model to reduce any dependency on training order that might be introduced.
 
 ## Discussion
 
