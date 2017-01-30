@@ -33,18 +33,22 @@ def is_not_near_zero(val):
 def add_noise_to_angle(angle):
     return angle + np.random.normal(0, NOISE_STDDEV)
 
-def get_better_training_data(lines):
+def augment_training_data(lines):
+    '''
+    Augment data from Udacity's data set.
+    '''
     data = []
     for line in lines:
         parts = line.split(', ')
         center_img_path = parts[0]
         left_img_path = parts[1]
         right_img_path = parts[2]
-        angle = float(parts[3])# + np.random.normal(0, 0.1)
+        angle = float(parts[3])
         data.append({'path': center_img_path, 'angle': add_noise_to_angle(angle), 'reverse': False})
         data.append({'path': center_img_path, 'angle': add_noise_to_angle(-angle), 'reverse': True})
         l_angle_adj = angle + ANGLE_ADJUST
         r_angle_adj = angle - ANGLE_ADJUST
+        # cap angles that are pushed past 100%
         if (l_angle_adj > 1.):
             l_angle_adj = 1.
         if (r_angle_adj < -1.):
@@ -53,20 +57,6 @@ def get_better_training_data(lines):
         data.append({'path': left_img_path, 'angle': add_noise_to_angle(-l_angle_adj), 'reverse': True})
         data.append({'path': right_img_path, 'angle': add_noise_to_angle(r_angle_adj), 'reverse': False})
         data.append({'path': right_img_path, 'angle': add_noise_to_angle(-r_angle_adj), 'reverse': True})
-        #data.append({'path': center_img_path, 'angle': angle, 'reverse': False})
-        #data.append({'path': center_img_path, 'angle': -angle, 'reverse': True})
-        #l_angle_adj = angle + ANGLE_ADJUST
-        #r_angle_adj = angle - ANGLE_ADJUST
-        #if (l_angle_adj > 1.):
-        #    l_angle_adj = 1.
-        #if (r_angle_adj < -1.):
-        #    r_angle_adj = -1.
-        ##if (l_angle_adj <= 1.):
-        #data.append({'path': left_img_path, 'angle': l_angle_adj, 'reverse': False})
-        #data.append({'path': left_img_path, 'angle': -l_angle_adj, 'reverse': True})
-        ##if (r_angle_adj >= -1.):
-        #data.append({'path': right_img_path, 'angle': r_angle_adj, 'reverse': False})
-        #data.append({'path': right_img_path, 'angle': -r_angle_adj, 'reverse': True})
     nonzeros = list(filter(is_not_near_zero, data))
     zeros = list(filter(is_near_zero, data))
     np.random.shuffle(zeros)
@@ -76,6 +66,10 @@ def get_better_training_data(lines):
     return all_data
 
 def get_left_wall_data():
+    '''
+    Image data taken close to the left wall of the track.
+    Try to force the car away from the left wall.
+    '''
     with open(LEFT_WALL_CSV, 'r') as f:
         lines = list(map(lambda l: l, f))
     data = []
@@ -91,6 +85,10 @@ def get_left_wall_data():
     return data
 
 def get_right_wall_data():
+    '''
+    Image data taken close to the right wall of the track.
+    Try to force the car away from the right wall.
+    '''
     with open(RIGHT_WALL_CSV, 'r') as f:
         lines = list(map(lambda l: l, f))
     data = []
@@ -106,6 +104,10 @@ def get_right_wall_data():
     return data
 
 def get_dirt_road_data():
+    '''
+    Images taken around the first dirt road curve.
+    Try to force the car away from the dirt road.
+    '''
     with open(DIRT_ROAD_CSV, 'r') as f:
         lines = list(map(lambda l: l, f))
     data = []
@@ -120,17 +122,17 @@ def get_dirt_road_data():
     np.random.shuffle(data)
     return data
 
-def generate_arrays_from_file(path):
+def generate_arrays_from_file():
     while True:
         with open(PATH_TO_CSV, 'r') as f:
             lines = list(map(lambda l: l, f))
-        udacity_data = get_better_training_data(lines)
+        augmented_data = augment_training_data(lines)
         left_wall_data = get_left_wall_data()
         right_wall_data = get_right_wall_data()
         dirt_road_data = get_dirt_road_data()
-        data = udacity_data + left_wall_data + right_wall_data + dirt_road_data + dirt_road_data
-        np.random.shuffle(data)
-        np.random.shuffle(data)
+        data = augmented_data + left_wall_data + right_wall_data + (2 * dirt_road_data)
+        for i in range(0, 2):
+            np.random.shuffle(data)
         for entry in data:
             processed_img = load_and_process_image(entry['path'],
                                                    entry['reverse'],
@@ -148,9 +150,6 @@ def process_image(im):
     cropped_image = resized_image[VTRIMTOP:RESIZED_Y-VTRIMBOT, :]
     yuv_image = cv2.cvtColor(cropped_image, cv2.COLOR_RGB2YUV)
     return normalize_image_features(yuv_image)
-    #return normalize_image_features(cropped_image)
-    #gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_RGB2GRAY)
-    #return normalize_image_features(gray_image)
 
 def load_and_process_image(filename, reverse, filename_only=False):
     if (filename_only):
@@ -167,20 +166,18 @@ if __name__ == '__main__':
 
     start_time = time.time()
     model.fit_generator(
-        generate_arrays_from_file(PATH_TO_CSV),
+        generate_arrays_from_file(),
         samples_per_epoch=3000,
         nb_epoch=5,
         verbose=1,
         nb_val_samples=500,
-        #max_q_size=1, # fix issue where multiple generators break stuff on non-GPU machine
-        validation_data=generate_arrays_from_file(PATH_TO_CSV))
+        validation_data=generate_arrays_from_file())
     print("--- %s seconds ---" % (time.time() - start_time))
 
     model.save_weights('model.h5')
 
     score = model.evaluate_generator(
-        generate_arrays_from_file(PATH_TO_CSV),
+        generate_arrays_from_file(),
         500)
     print('Test score:', score[0])
     print('Test accuracy:', score[1])
-    #gc.collect()
