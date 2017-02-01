@@ -3,6 +3,7 @@ from keras.layers import Convolution2D, Flatten, Dense, Dropout, MaxPooling2D
 from keras.regularizers import l2
 from keras.constraints import maxnorm
 from bc_utils import *
+from keras.utils.visualize_util import plot
 
 def generate_model():
     model = Sequential()
@@ -26,5 +27,6 @@ def generate_model():
 
 if __name__ == '__main__':
     model = generate_model()
+    plot(model, to_file='model.png', show_shapes=True)
     with open('model.json', 'w') as f:
         f.write(model.to_json())
