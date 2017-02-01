@@ -77,15 +77,27 @@ Some notable highlights of the augmented data:
 
 Below are some representative samples of the raw input images from the datasets used.
 
+Udacity Dataset - Center Camera
+
 ![Udacity Dataset - Center Camera](samples/udacity-center-sample.jpg "Udacity Dataset - Center Camera")
+
+Udacity Dataset - Left Camera
 
 ![Udacity Dataset - Left Camera](samples/udacity-left-sample.jpg "Udacity Dataset - Left Camera")
 
+Udacity Dataset - Right Camera
+
 ![Udacity Dataset - Right Camera](samples/udacity-right-sample.jpg "Udacity Dataset - Right Camera")
+
+Custom Data - Hugging Left Wall
 
 ![Custom Data - Hugging Left Wall](samples/left-wall-center-sample.jpg "Custom Data - Hugging Left Wall")
 
+Custom Data - Hugging Right Wall
+
 ![Custom Data - Hugging Right Wall](samples/right-wall-center-sample.jpg "Custom Data - Hugging Right Wall")
+
+Custom Dataset - Hugging Dirt Road
 
 ![Custom Data - Hugging Dirt Road](samples/dirt-road-center-sample.jpg "Custom Data - Hugging Dirt Road")
 
